@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kimlik Avı Tespit Testi — Modül 7 Atölyesi</title>
+<style>
+  :root{
+    --bg:#0F1B2D;
+    --card:#16263F;
+    --card-border:#23395C;
+    --text:#E8EDF4;
+    --text-dim:#8294B0;
+    --amber:#F2A23C;
+    --cyan:#36C2CE;
+    --red:#E25C5C;
+    --green:#4FD18B;
+    --mono: "SF Mono","Consolas","Menlo",monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 16px 60px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+
+  .wrap{ width:100%; max-width:640px; }
+
+  header{ margin-bottom:22px; }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.12em;
+    color:var(--cyan);
+    text-transform:uppercase;
+    border-top:1px solid var(--card-border);
+    padding-top:10px;
+    margin-bottom:10px;
+    display:flex; justify-content:space-between;
+  }
+  h1{
+    font-size:28px;
+    line-height:1.15;
+    margin:0 0 8px;
+    font-weight:800;
+    letter-spacing:-0.01em;
+  }
+  .sub{ color:var(--text-dim); font-size:15px; line-height:1.5; margin:0; }
+
+  .progress-row{
+    display:flex; gap:6px; margin:20px 0 4px;
+  }
+  .progress-seg{
+    flex:1; height:5px; border-radius:3px; background:#23395C;
+    transition:background .3s;
+  }
+  .progress-seg.done{ background:var(--cyan); }
+  .progress-seg.current{ background:var(--amber); }
+  .progress-label{
+    font-family:var(--mono); font-size:12px; color:var(--text-dim);
+    display:flex; justify-content:space-between; margin-bottom:18px;
+  }
+
+  .score-banner{
+    font-family:var(--mono); font-size:13px; color:var(--text-dim);
+    display:flex; justify-content:space-between; margin-bottom:6px;
+  }
+  .score-banner b{ color:var(--green); }
+
+  /* Mesaj kartı: bir telefon ekranı / e-posta gibi görünür */
+  .msg-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    overflow:hidden;
+    margin-bottom:18px;
+    animation:rise .35s ease;
+  }
+  @keyframes rise{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+  .msg-meta{
+    padding:14px 18px;
+    border-bottom:1px solid var(--card-border);
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .msg-meta .channel{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:0.08em;
+    color:var(--amber);
+    text-transform:uppercase;
+  }
+  .msg-meta .from{
+    font-size:15px;
+    font-weight:700;
+  }
+  .msg-meta .from span{
+    color:var(--text-dim);
+    font-weight:400;
+    font-size:13px;
+    margin-left:6px;
+  }
+  .msg-meta .subject{
+    font-size:14px;
+    color:var(--text-dim);
+  }
+
+  .msg-body{
+    padding:18px;
+    font-size:15px;
+    line-height:1.6;
+    white-space:pre-wrap;
+  }
+  .msg-body .fake-link{
+    color:var(--cyan);
+    text-decoration:underline;
+    text-decoration-style:dotted;
+    cursor:default;
+  }
+
+  .choices{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .choice-btn{
+    font-family:inherit;
+    font-size:15px;
+    font-weight:700;
+    padding:16px 10px;
+    border-radius:12px;
+    border:1px solid var(--card-border);
+    background:transparent;
+    color:var(--text);
+    cursor:pointer;
+    transition:transform .15s, background .15s, border-color .15s;
+  }
+  .choice-btn:hover{ transform:translateY(-1px); }
+  .choice-btn:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+  .choice-btn.safe{ border-color:#2c4a3c; }
+  .choice-btn.safe:hover{ background:rgba(79,209,139,0.08); border-color:var(--green); }
+  .choice-btn.risky{ border-color:#4a2c2c; }
+  .choice-btn.risky:hover{ background:rgba(226,92,92,0.08); border-color:var(--red); }
+  .choice-btn:disabled{ cursor:default; opacity:.55; transform:none; }
+
+  .feedback{
+    border-radius:12px;
+    padding:16px 18px;
+    margin-bottom:18px;
+    font-size:14px;
+    line-height:1.6;
+    animation:rise .3s ease;
+    border:1px solid;
+  }
+  .feedback.correct{ background:rgba(79,209,139,0.08); border-color:#2c4a3c; }
+  .feedback.wrong{ background:rgba(226,92,92,0.08); border-color:#4a2c2c; }
+  .feedback .tag{
+    font-family:var(--mono); font-size:11px; letter-spacing:0.08em;
+    text-transform:uppercase; display:block; margin-bottom:6px;
+  }
+  .feedback.correct .tag{ color:var(--green); }
+  .feedback.wrong .tag{ color:var(--red); }
+  .feedback .clue-list{ margin:10px 0 0; padding-left:18px; }
+  .feedback .clue-list li{ margin-bottom:4px; }
+
+  .next-btn{
+    width:100%;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:700;
+    padding:14px;
+    border-radius:12px;
+    border:none;
+    background:var(--amber);
+    color:#1a1304;
+    cursor:pointer;
+    transition:filter .15s;
+  }
+  .next-btn:hover{ filter:brightness(1.08); }
+  .next-btn:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+
+  /* Sonuç ekranı */
+  .result-screen{ text-align:center; padding-top:10px; }
+  .result-score{
+    font-family:var(--mono);
+    font-size:56px;
+    font-weight:800;
+    color:var(--cyan);
+    margin:18px 0 4px;
+  }
+  .result-score span{ font-size:24px; color:var(--text-dim); }
+  .result-tier{
+    font-size:18px; font-weight:700; margin-bottom:6px;
+  }
+  .result-msg{ color:var(--text-dim); font-size:14px; line-height:1.6; margin-bottom:24px; }
+  .restart-btn{
+    font-family:inherit; font-size:14px; font-weight:700;
+    padding:12px 22px; border-radius:10px;
+    border:1px solid var(--card-border); background:transparent; color:var(--text);
+    cursor:pointer;
+  }
+  .restart-btn:hover{ border-color:var(--cyan); }
+
+  footer{
+    margin-top:34px;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--text-dim);
+    text-align:center;
+    border-top:1px solid var(--card-border);
+    padding-top:14px;
+    width:100%;
+    max-width:640px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">
+      <span>TİKA · MODÜL 7 ATÖLYESİ</span>
+      <span>ARAÇ 01 / 04</span>
+    </div>
+    <h1>Bu mesaj güvenli mi, şüpheli mi?</h1>
+    <p class="sub">10 gerçekçi örnek göreceksiniz: e-posta, SMS ve sesli arama senaryoları. Her birinde karar verin, sonra neden doğru veya yanlış olduğunu görün.</p>
+  </header>
+
+  <div id="quiz-screen">
+    <div class="progress-row" id="progress-row"></div>
+    <div class="progress-label">
+      <span id="progress-text">Soru 1 / 10</span>
+      <span id="score-text">Doğru: 0</span>
+    </div>
+
+    <div class="msg-card" id="msg-card">
+      <div class="msg-meta">
+        <div class="channel" id="m-channel">E-POSTA</div>
+        <div class="from" id="m-from">Gönderen Adı <span id="m-fromsub"></span></div>
+        <div class="subject" id="m-subject"></div>
+      </div>
+      <div class="msg-body" id="m-body"></div>
+    </div>
+
+    <div class="choices" id="choices">
+      <button class="choice-btn safe" id="btn-safe" type="button">✓ Güvenli</button>
+      <button class="choice-btn risky" id="btn-risky" type="button">⚠ Şüpheli</button>
+    </div>
+
+    <div id="feedback-zone"></div>
+  </div>
+
+  <div id="result-screen" class="result-screen" style="display:none;">
+    <div class="eyebrow" style="justify-content:center;">SONUÇ</div>
+    <div class="result-score"><span id="final-score">0</span><span> / 10</span></div>
+    <div class="result-tier" id="result-tier"></div>
+    <p class="result-msg" id="result-msg"></p>
+    <button class="restart-btn" id="restart-btn" type="button">Testi yeniden başlat</button>
+  </div>
+
+  <footer>
+    TİKA İŞ MODELİ EĞİTİMİ — MODÜL 7: SİBER GÜVENLİK, VERİ KORUMA VE DİJİTAL RİSKLER<br>
+    Bu araç tamamen çevrimdışı çalışır · veri kaydetmez · eğitim amaçlıdır
+  </footer>
+</div>
+
+<script>
+// ============================================================
+// VERİ: 10 senaryo (5 şüpheli / kimlik avı, 5 güvenli/meşru)
+// Her senaryo gerçek hayattaki örüntüleri temsil eder; Modül 7,
+// Bölüm 2.3 (Kimlik Avı ve Sosyal Mühendislik) ile birebir uyumludur.
+// ============================================================
+const SCENARIOS = [
+  {
+    channel: "E-POSTA",
+    from: "Lojistik Destek",
+    fromsub: "destek@kargo-takip-bildirimi.com",
+    subject: "Kargonuz Gümrükte Bekliyor — Acil İşlem Gerekli",
+    body: "Sayın Müşterimiz,\n\nKargonuz gümrük işlemleri nedeniyle BEKLEMEDE. 24 saat içinde 35 TL gümrük ücretini ödemezseniz kargonuz iade edilecektir.\n\nÖdeme için aşağıdaki bağlantıya tıklayınız:\nhttp://kargo-odeme-guvenli.net/tr/odeme\n\nİyi günler diler, anlayışınız için teşekkür ederiz.",
+    isPhishing: true,
+    clues: [
+      "Gönderen adresi resmi bir kargo firması alan adı değil; \u201ckargo-takip-bildirimi.com\u201d gibi uydurma bir domain kullanılmış.",
+      "Aciliyet baskısı var: \u201c24 saat içinde\u201d ifadesi, eleştirel düşünmeden hızlı tıklamaya zorlar.",
+      "Bağlantı \u201chttp://\u201d ile başlıyor (güvensiz) ve marka adıyla ilgisiz bir alan adına gidiyor.",
+      "Gerçek kargo firmaları gümrük ücretini genellikle kendi resmi uygulaması veya sitesi üzerinden, firma adını taşıyan bir adresten talep eder."
+    ]
+  },
+  {
+    channel: "E-POSTA",
+    from: "Ayşe Yılmaz — Muhasebe",
+    fromsub: "ayse.yilmaz@firmaniz.com.tr",
+    subject: "Haziran ayı fatura listesi ekte",
+    body: "Merhaba,\n\nHaziran ayına ait tedarikçi faturalarının güncel listesini ekte paylaşıyorum. Ödeme planlamasını buna göre yapabiliriz.\n\nSorunuz olursa ofis telefonumdan bana ulaşabilirsiniz.\n\nİyi çalışmalar,\nAyşe",
+    isPhishing: false,
+    clues: [
+      "Gönderen adresi şirketin kendi kurumsal alan adını (\u201c@firmaniz.com.tr\u201d) kullanıyor.",
+      "Mesajda aciliyet baskısı, tehdit veya beklenmedik bir para talebi yok.",
+      "İçerik, göndericinin günlük iş rutiniyle (muhasebe, fatura listesi) tutarlı.",
+      "Yine de ek dosya açılmadan önce, beklenmedik bir ek ise göndereni farklı bir kanaldan (telefon, yüz yüze) teyit etmek her zaman iyi bir alışkanlıktır."
+    ]
+  },
+  {
+    channel: "SMS",
+    from: "Banka Bildirim",
+    fromsub: "+90 555 XXX XX XX",
+    subject: "",
+    body: "BANKANIZ: Hesabinizda olagandisi hareket tespit edildi. Hesabinizi dogrulamak icin: bit.ly/hesap-dogrula\nDogrulamazsaniz hesabiniz 2 saat icinde kapatilacaktir.",
+    isPhishing: true,
+    clues: [
+      "Kısaltılmış bağlantılar (bit.ly gibi) gerçek hedef adresi gizler; bankalar resmi SMS'lerinde bu tür bağlantı kısaltıcıları kullanmaz.",
+      "\u201c2 saat içinde kapatılacaktır\u201d ifadesi yapay bir aciliyet ve korku yaratır — klasik sosyal mühendislik tekniği.",
+      "Gönderen bir banka adı/kısa numarası değil, sıradan bir cep telefonu numarası.",
+      "Bankalar hesap doğrulamasını SMS'teki bir bağlantı üzerinden değil, kendi resmi uygulaması üzerinden ister."
+    ]
+  },
+  {
+    channel: "E-POSTA",
+    from: "Genel Müdür",
+    fromsub: "genelmudur@firma-grup.co",
+    subject: "Acil — Şu an toplantıdayım, senden bir ricam var",
+    body: "Şu an müşteriyle toplantıdayım, telefona bakamıyorum. Acil bir tedarikçi ödemesi yapmamız gerekiyor, 18.500 TL'yi aşağıdaki IBAN'a hemen havale eder misin? Detayları döner döner anlatırım, şimdi açıklayamam. Bu mesajı kimseyle paylaşma, ben hallederim sonrasını.\n\nIBAN: TR00 0000 0000 0000 0000 0000 00",
+    isPhishing: true,
+    clues: [
+      "Bu, \u201cyönetici dolandırıcılığı\u201d (CEO fraud) olarak bilinen klasik bir saldırı örüntüsüdür.",
+      "Gönderen alan adı şirketin gerçek kurumsal alan adıyla birebir aynı değil (\u201cfirma-grup.co\u201d gibi benzer ama farklı bir alan adı).",
+      "\u201cAçıklayamam\u201d ve \u201ckimseyle paylaşma\u201d ifadeleri, doğrulamayı engellemek için bilinçli olarak kullanılan izolasyon taktikleridir.",
+      "Her zaman: beklenmedik bir ödeme talebi geldiğinde, talebi farklı bir kanaldan (telefonla arayarak, yüz yüze) doğrulayın — e-postanın kendisine asla güvenmeyin."
+    ]
+  },
+  {
+    channel: "E-POSTA",
+    from: "Bulut Depolama Bildirimi",
+    fromsub: "bildirim@drive-hizmetleri.com",
+    subject: "Depolama alanınız %98 dolu",
+    body: "Hesabınızdaki depolama alanı dolmak üzere. Yeni dosya alabilmek için hesabınızı şimdi onaylayın:\n\nhttp://drive-onay-sistemi.com/giris\n\nOnaylamazsanız, 48 saat sonra eski dosyalarınız otomatik olarak silinecektir.",
+    isPhishing: true,
+    clues: [
+      "Gerçek bulut sağlayıcıları (Google, Microsoft vb.) bu tür uyarıları kendi resmi alan adlarından gönderir, uydurma bir adresten değil.",
+      "\u201c48 saat sonra silinecek\u201d tehdidi yapay aciliyet yaratıyor.",
+      "Bağlantı, sağlayıcının gerçek giriş sayfasına değil, tamamen farklı bir alan adına yönlendiriyor.",
+      "Bu tür bir uyarı alındığında, e-postadaki bağlantıya tıklamak yerine doğrudan tarayıcıdan resmi siteye giderek hesabı kontrol etmek güvenlidir."
+    ]
+  },
+  {
+    channel: "WHATSAPP / SES",
+    from: "Bilinmeyen Numara",
+    fromsub: "+90 5XX XXX XX XX",
+    subject: "",
+    body: "(Sesli mesaj — yöneticinizin sesine çok benzeyen bir ses): \u201cMerhaba, ben şu an yurt dışındayım, telefonum değişti. Acil bir konu var, sana ayrıca yazıyorum, oradan devam edelim.\u201d",
+    isPhishing: true,
+    clues: [
+      "Bu senaryo, yapay zekâ ile üretilmiş sahte ses (deepfake) tekniğine dayanan bir sosyal mühendislik saldırısını temsil eder.",
+      "\u201cTelefonum değişti, ayrıca yazıyorum\u201d ifadesi, kurbanı bilinmeyen bir hesaba veya numaraya yönlendirmenin tipik bir yoludur.",
+      "Ses tanıdık gelse bile, kanalın kendisi (bilinmeyen numara) güvenilir değildir.",
+      "Bu durumda en güvenli adım: kişiyi bildiğiniz, önceden kayıtlı numarasından geri aramaktır — yeni gelen numarayı asla doğrudan aramamak veya o numaradan gelen talebe göre hareket etmemek."
+    ]
+  },
+  {
+    channel: "E-POSTA",
+    from: "İK Departmanı",
+    fromsub: "ik@firmaniz.com.tr",
+    subject: "Yıllık izin formu güncellendi",
+    body: "Merhaba arkadaşlar,\n\nYıllık izin talep formumuzu güncelledik. Yeni formu kullanmaya başlayabilirsiniz; eski form artık geçerli değildir. Formu ofis paylaşım klasöründe \u201cFormlar\u201d klasöründe bulabilirsiniz.\n\nİyi çalışmalar.",
+    isPhishing: false,
+    clues: [
+      "Gönderen, şirketin kendi kurumsal alan adını kullanıyor.",
+      "İçerik rutin bir idari bilgilendirme; para, şifre veya kişisel veri talebi içermiyor.",
+      "Herhangi bir aciliyet, tehdit veya dışarıya yönlendiren şüpheli bir bağlantı yok.",
+      "Bu tür rutin iç iletişimlerde risk düşüktür, ancak yine de eklenti varsa kaynağından (ofis paylaşım klasörü) açmak en güvenli yoldur."
+    ]
+  },
+  {
+    channel: "SMS",
+    from: "Devlet Hizmetleri",
+    fromsub: "+90 5XX XXX XX XX",
+    subject: "",
+    body: "e-Devlet sifreniz suresi dolmustur. Yeniden olusturmak icin: edevlet-guncelle.info adresini ziyaret edin. Aksi halde hesabiniz askiya alinacaktir.",
+    isPhishing: true,
+    clues: [
+      "Resmî e-Devlet bildirimleri \u201c.info\u201d gibi sıradan bir alan adından gelmez; resmî kurumlar \u201c.gov.tr\u201d alan adını kullanır.",
+      "e-Devlet şifrelerinin böyle bir \u201csüresi dolma\u201d bildirimi standart uygulama değildir; bu, kullanıcıyı sahte bir giriş sayfasına çekme amacı taşır.",
+      "\u201cAksi halde askıya alınacaktır\u201d ifadesi klasik bir aciliyet/korku taktiğidir.",
+      "Şüpheli bir resmî kurum mesajı geldiğinde, bağlantıya tıklamadan doğrudan tarayıcıdan resmî siteye gitmek güvenlidir."
+    ]
+  },
+  {
+    channel: "E-POSTA",
+    from: "Tedarikçi — Akın Tekstil",
+    fromsub: "siparis@akintekstil.com.tr",
+    subject: "Sipariş No 4521 — Teslimat tarihi onayı",
+    body: "Merhaba,\n\n4521 numaralı siparişinizin teslimat tarihini 28 Haziran olarak onaylıyoruz. Herhangi bir değişiklik talebiniz olursa lütfen bu e-postaya yanıt verin veya bizi arayın.\n\nİyi çalışmalar,\nAkın Tekstil Satış Ekibi",
+    isPhishing: false,
+    clues: [
+      "Gönderen adresi, bilinen tedarikçi firmanın kendi kurumsal alan adını taşıyor.",
+      "İçerik, mevcut bir sipariş numarasına atıfta bulunuyor ve rutin bir iş sürecini yansıtıyor.",
+      "Herhangi bir ödeme talebi, şifre talebi veya şüpheli bağlantı içermiyor.",
+      "Yine de büyük tutarlı ödeme talepleri içeren e-postalarda, IBAN değişikliği gibi kritik bilgiler her zaman telefonla teyit edilmelidir."
+    ]
+  },
+  {
+    channel: "QR KOD (RESTORAN/ÖDEME NOKTASI)",
+    from: "Yapıştırılmış QR Etiketi",
+    fromsub: "Otopark ödeme noktası üzerinde",
+    subject: "",
+    body: "Otoparkın ödeme makinesinin üzerine, resmi etiketin tam üzerine yapıştırılmış, biraz eğri duran ek bir QR kod etiketi var. Etiket \u201cHızlı Ödeme — QR ile Öde\u201d yazıyor.",
+    isPhishing: true,
+    clues: [
+      "Resmi bir etiketin üzerine sonradan yapıştırılmış, hizası bozuk bir QR kod; bu fiziksel \u201cQR kod dolandırıcılığının\u201d tipik bir işaretidir.",
+      "QR kodlar gözle \u201cnereye gittiğini\u201d göstermez; taratıldığında sahte bir ödeme sayfasına yönlendirebilir.",
+      "Gerçek otopark/ödeme sistemleri genellikle sabit, makinenin kendi ekranına entegre ödeme yöntemleri sunar; ek, yapıştırılmış etiketler şüphe uyandırmalıdır.",
+      "Güvenli davranış: QR kodu taratmadan önce makinenin resmi ödeme yöntemini (kart okuyucu, resmi uygulama) tercih etmek veya görevliye sormaktır."
+    ]
+  }
+];
+
+let order = [];
+let idx = 0;
+let score = 0;
+let answered = false;
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function buildProgress(){
+  const row = document.getElementById('progress-row');
+  row.innerHTML = '';
+  for(let i=0;i<SCENARIOS.length;i++){
+    const seg = document.createElement('div');
+    seg.className = 'progress-seg';
+    row.appendChild(seg);
+  }
+}
+
+function updateProgressUI(){
+  const segs = document.querySelectorAll('.progress-seg');
+  segs.forEach((s,i)=>{
+    s.classList.remove('done','current');
+    if(i < idx) s.classList.add('done');
+    else if(i === idx) s.classList.add('current');
+  });
+  document.getElementById('progress-text').textContent = 'Soru ' + (idx+1) + ' / ' + SCENARIOS.length;
+  document.getElementById('score-text').textContent = 'Doğru: ' + score;
+}
+
+function renderScenario(){
+  answered = false;
+  const s = order[idx];
+  document.getElementById('m-channel').textContent = s.channel;
+  document.getElementById('m-from').innerHTML = s.from + ' <span id="m-fromsub"></span>';
+  document.getElementById('m-fromsub').textContent = s.fromsub;
+  document.getElementById('m-subject').textContent = s.subject;
+  document.getElementById('m-subject').style.display = s.subject ? 'block' : 'none';
+  document.getElementById('m-body').textContent = s.body;
+  document.getElementById('feedback-zone').innerHTML = '';
+  document.getElementById('btn-safe').disabled = false;
+  document.getElementById('btn-risky').disabled = false;
+  updateProgressUI();
+}
+
+function answer(choseRisky){
+  if(answered) return;
+  answered = true;
+  const s = order[idx];
+  document.getElementById('btn-safe').disabled = true;
+  document.getElementById('btn-risky').disabled = true;
+
+  const correct = (choseRisky === s.isPhishing);
+  if(correct) score++;
+
+  const zone = document.getElementById('feedback-zone');
+  const box = document.createElement('div');
+  box.className = 'feedback ' + (correct ? 'correct' : 'wrong');
+
+  let tagText, headText;
+  if(correct && s.isPhishing){ tagText='Doğru tespit'; headText='Bu gerçekten şüpheli bir mesajdı.'; }
+  else if(correct && !s.isPhishing){ tagText='Doğru tespit'; headText='Bu mesaj gerçekten güvenliydi.'; }
+  else if(!correct && s.isPhishing){ tagText='Dikkat — bu bir kimlik avı örneğiydi'; headText='Bu mesaj aslında şüpheliydi.'; }
+  else { tagText='Dikkat — bu mesaj güvenliydi'; headText='Bu mesajda risk işareti yoktu.'; }
+
+  let html = '<span class="tag">'+tagText+'</span>' + headText;
+  html += '<ul class="clue-list">';
+  s.clues.forEach(c => html += '<li>'+c+'</li>');
+  html += '</ul>';
+  box.innerHTML = html;
+  zone.appendChild(box);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'next-btn';
+  nextBtn.type = 'button';
+  nextBtn.textContent = (idx === order.length-1) ? 'Sonucu gör' : 'Sıradaki mesaj →';
+  nextBtn.onclick = goNext;
+  zone.appendChild(nextBtn);
+
+  updateProgressUI();
+}
+
+function goNext(){
+  idx++;
+  if(idx >= order.length){
+    showResult();
+  } else {
+    renderScenario();
+  }
+}
+
+function showResult(){
+  document.getElementById('quiz-screen').style.display = 'none';
+  const rs = document.getElementById('result-screen');
+  rs.style.display = 'block';
+  document.getElementById('final-score').textContent = score;
+
+  let tier, msg;
+  if(score >= 9){
+    tier = 'Çok iyi bir göz!';
+    msg = 'İncelik gerektiren kimlik avı işaretlerini büyük ölçüde fark ediyorsunuz. Bu farkındalığı çalışanlarınızla da paylaşmanız, firmanızın en ucuz ve en etkili güvenlik yatırımı olur.';
+  } else if(score >= 6){
+    tier = 'İyi bir başlangıç';
+    msg = 'Çoğu işareti yakaladınız, ama bazı incelikli detaylar (alan adı, aciliyet dili, bağlantı yapısı) gözden kaçabiliyor. Modül 7, Bölüm 2.3\u2019teki kimlik avı çeşitlerini tekrar gözden geçirmek faydalı olabilir.';
+  } else {
+    tier = 'Bu konuda dikkatli olmalısınız';
+    msg = 'Bu sonuç kötü bir şey değil — aksine, bu eğitimin tam olarak neden gerekli olduğunu gösteriyor. Sosyal mühendislik saldırıları, dikkatli ve zeki insanları da kandırmak üzere tasarlanır. Önemli olan, şirketinizde \u201cşüpheliyse, önce teyit et\u201d kuralını alışkanlık haline getirmektir.';
+  }
+  document.getElementById('result-tier').textContent = tier;
+  document.getElementById('result-msg').textContent = msg;
+}
+
+function restart(){
+  order = shuffle(SCENARIOS);
+  idx = 0;
+  score = 0;
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  buildProgress();
+  renderScenario();
+}
+
+document.getElementById('btn-safe').addEventListener('click', ()=>answer(false));
+document.getElementById('btn-risky').addEventListener('click', ()=>answer(true));
+document.getElementById('restart-btn').addEventListener('click', restart);
+
+restart();
+</script>
+</body>
+</html>
