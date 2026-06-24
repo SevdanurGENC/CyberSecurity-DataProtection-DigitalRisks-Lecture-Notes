@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOBİ Siber Olgunluk Skoru — Modül 7 Atölyesi</title>
+<style>
+  :root{
+    --bg:#0F1B2D;
+    --card:#16263F;
+    --card-border:#23395C;
+    --text:#E8EDF4;
+    --text-dim:#8294B0;
+    --amber:#F2A23C;
+    --cyan:#36C2CE;
+    --red:#E25C5C;
+    --green:#4FD18B;
+    --mono: "SF Mono","Consolas","Menlo",monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 16px 60px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+  .wrap{ width:100%; max-width:680px; }
+
+  header{ margin-bottom:20px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:0.12em;
+    color:var(--cyan); text-transform:uppercase;
+    border-top:1px solid var(--card-border); padding-top:10px; margin-bottom:10px;
+    display:flex; justify-content:space-between;
+  }
+  h1{ font-size:26px; line-height:1.2; margin:0 0 8px; font-weight:800; letter-spacing:-0.01em; }
+  .sub{ color:var(--text-dim); font-size:15px; line-height:1.5; margin:0; }
+
+  /* Sticky skor başlığı */
+  .score-sticky{
+    position:sticky; top:0; z-index:10;
+    background:rgba(15,27,45,0.92);
+    backdrop-filter:blur(6px);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:16px 18px;
+    margin:18px 0;
+    display:flex; align-items:center; gap:16px;
+  }
+  .score-circle{
+    width:64px; height:64px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-weight:800; font-size:20px;
+    border:3px solid var(--card-border);
+    flex-shrink:0;
+    transition:border-color .3s, color .3s;
+  }
+  .score-meta{ flex:1; }
+  .score-meta .sc-label{ font-family:var(--mono); font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:3px; }
+  .score-meta .sc-tier{ font-size:16px; font-weight:700; }
+  .score-bar-bg{ height:6px; border-radius:3px; background:#23395C; margin-top:8px; overflow:hidden; }
+  .score-bar-fill{ height:100%; border-radius:3px; transition:width .3s, background .3s; }
+
+  .category-block{ margin-bottom:22px; }
+  .cat-header{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--card-border);
+  }
+  .cat-title{ font-size:16px; font-weight:700; }
+  .cat-score{ font-family:var(--mono); font-size:13px; color:var(--text-dim); }
+
+  .check-item{
+    display:flex; align-items:flex-start; gap:12px;
+    padding:13px 14px; border-radius:10px;
+    border:1px solid var(--card-border); background:var(--card);
+    margin-bottom:8px; cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .check-item:hover{ border-color:var(--cyan); }
+  .check-item input{
+    margin-top:3px; width:18px; height:18px; flex-shrink:0; accent-color: var(--green); cursor:pointer;
+  }
+  .check-item label{ font-size:14px; line-height:1.5; cursor:pointer; flex:1; }
+  .check-item.checked{ border-color:#2c4a3c; background:rgba(79,209,139,0.06); }
+
+  .result-card{
+    background:var(--card); border:1px solid var(--card-border); border-radius:14px;
+    padding:22px 20px; margin-top:10px;
+  }
+  .result-card h2{ font-size:14px; margin:0 0 14px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); font-family:var(--mono); }
+  .priority-item{
+    display:flex; gap:12px; align-items:flex-start;
+    padding:12px 0; border-bottom:1px solid var(--card-border);
+  }
+  .priority-item:last-child{ border-bottom:none; }
+  .priority-rank{
+    font-family:var(--mono); font-weight:800; color:var(--red); font-size:18px; flex-shrink:0; width:24px;
+  }
+  .priority-text{ font-size:14px; line-height:1.5; }
+  .priority-text b{ display:block; margin-bottom:2px; }
+  .priority-text .cat-tag{ font-family:var(--mono); font-size:11px; color:var(--text-dim); text-transform:uppercase; }
+
+  .all-good-msg{
+    text-align:center; padding:20px 10px; color:var(--green); font-size:15px; line-height:1.6;
+  }
+
+  .reset-btn{
+    width:100%; font-family:inherit; font-size:14px; font-weight:700;
+    padding:13px; border-radius:12px; border:1px solid var(--card-border);
+    background:transparent; color:var(--text); cursor:pointer; margin-top:18px;
+  }
+  .reset-btn:hover{ border-color:var(--red); color:var(--red); }
+
+  footer{
+    margin-top:14px; font-family:var(--mono); font-size:11px; color:var(--text-dim);
+    text-align:center; border-top:1px solid var(--card-border); padding-top:14px;
+    width:100%; max-width:680px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">
+      <span>TİKA · MODÜL 7 ATÖLYESİ</span>
+      <span>ARAÇ 04 / 04</span>
+    </div>
+    <h1>KOBİ Siber Olgunluk Skoru</h1>
+    <p class="sub">Modül 7, Bölüm 9'daki kontrol listesinin interaktif halidir. Her maddeyi firmanız için işaretleyin; aşağıda anlık olarak toplam puanınızı ve en öncelikli risk alanlarınızı göreceksiniz.</p>
+  </header>
+
+  <div class="score-sticky">
+    <div class="score-circle" id="score-circle">0/15</div>
+    <div class="score-meta">
+      <div class="sc-label">SİBER OLGUNLUK SKORU</div>
+      <div class="sc-tier" id="score-tier">Henüz değerlendirme yapılmadı</div>
+      <div class="score-bar-bg"><div class="score-bar-fill" id="score-bar-fill" style="width:0%; background:var(--text-dim);"></div></div>
+    </div>
+  </div>
+
+  <div id="categories"></div>
+
+  <div class="result-card">
+    <h2>[ ÖNCELİK_ALANLARI ]</h2>
+    <div id="priority-list"></div>
+  </div>
+
+  <button class="reset-btn" id="reset-btn" type="button">Tüm işaretleri sıfırla</button>
+
+  <footer>
+    TİKA İŞ MODELİ EĞİTİMİ — MODÜL 7: SİBER GÜVENLİK, VERİ KORUMA VE DİJİTAL RİSKLER<br>
+    Bu araç tamamen çevrimdışı çalışır · işaretleriniz sadece bu sayfada, tarayıcı kapanana kadar tutulur
+  </footer>
+</div>
+
+<script>
+// ============================================================
+// KOBİ SİBER OLGUNLUK SKORU
+// Modül 7, Bölüm 9.2'deki 15 maddelik kontrol listesinin birebir
+// dijital karşılığıdır; maddeler aynı sırada ve aynı içerikte korunmuştur.
+// Kategorilere ayrılarak (Bölüm 2-8 ile eşleşen başlıklar) hangi alanın
+// daha öncelikli olduğu görselleştirilir.
+// ============================================================
+
+const CATEGORIES = [
+  {
+    name: "Erişim ve Kimlik Güvenliği",
+    items: [
+      { id:"c1", text:"Tüm kritik hesaplarda (e-posta, banka, bulut yazılımları, ERP/CRM) çok faktörlü kimlik doğrulama (MFA) aktif mi?" },
+      { id:"c5", text:"İşten ayrılan çalışanların tüm sistem erişimleri aynı gün kapatılıyor mu?" },
+      { id:"c6", text:"Erişim yetkileri \u201cherkese her şey\u201d değil, \u201ckişiye gerektiği kadar\u201d ilkesiyle mi düzenlenmiş?" },
+    ]
+  },
+  {
+    name: "Yedekleme ve Veri Sürekliliği",
+    items: [
+      { id:"c2", text:"Kritik veriler (muhasebe, müşteri listesi, üretim verisi) düzenli olarak yedekleniyor mu ve bu yedek test edildi mi?" },
+      { id:"c3", text:"Yedeklerden en az biri, ana sistemden fiziksel/mantıksal olarak ayrı bir ortamda mı (3-2-1 kuralı)?" },
+    ]
+  },
+  {
+    name: "İnsan Faktörü ve Farkındalık",
+    items: [
+      { id:"c4", text:"Çalışanlara kimlik avı (phishing) ve sosyal mühendislik konusunda en az yıllık bir bilgilendirme yapılıyor mu?" },
+      { id:"c9", text:"Şirkette yapay zekâ araçlarının güvenli kullanımına dair en azından sözlü/yazılı basit bir kural var mı?" },
+      { id:"c15", text:"Siber güvenlikten sorumlu en az bir kişi (tam zamanlı uzman olmasa da) belirlenmiş mi?" },
+    ]
+  },
+  {
+    name: "Bulut ve Sistem Güvenliği",
+    items: [
+      { id:"c7", text:"Kullanılan bulut hizmet sağlayıcılarının güvenlik sertifikaları (örn. ISO/IEC 27001) kontrol edildi mi?" },
+      { id:"c8", text:"Paylaşılan klasör/dosya erişim ayarları düzenli olarak gözden geçiriliyor mu?" },
+    ]
+  },
+  {
+    name: "Üretim / IoT Güvenliği",
+    items: [
+      { id:"c10", text:"Üretim hattındaki IoT/OT cihazlarının varsayılan şifreleri değiştirildi mi?" },
+      { id:"c11", text:"Ofis ağı ile üretim/operasyon ağı birbirinden ayrılmış mı (ağ segmentasyonu)?" },
+    ]
+  },
+  {
+    name: "Veri Koruma Uyumluluğu",
+    items: [
+      { id:"c12", text:"Müşteri verisinin hangi amaçla, ne kadar süreyle saklandığı yazılı olarak tanımlanmış mı (veri envanteri)?" },
+      { id:"c13", text:"Web sitesi/sipariş formunda basit bir aydınlatma/gizlilik metni var mı?" },
+    ]
+  },
+  {
+    name: "Olay Müdahale Hazırlığı",
+    items: [
+      { id:"c14", text:"Şirkette yazılı, en azından bir sayfalık bir \u201colay müdahale planı\u201d (acil durumda kim aranır, ilk adımlar nedir) var mı?" },
+    ]
+  },
+];
+
+// Öncelik metinleri: işaretlenmemiş her madde için, hangi bölüme bakılması
+// gerektiğini ve neden önemli olduğunu kısaca belirtir.
+const PRIORITY_GUIDANCE = {
+  c1: { title:"MFA'yı kritik hesaplarda açın", section:"Bölüm 2.4", note:"En ucuz ve en etkili tek güvenlik önlemi; genellikle ücretsiz olarak açılabilir." },
+  c2: { title:"Yedekleme sürecini kurun ve test edin", section:"Bölüm 2.5", note:"Test edilmemiş bir yedek, kriz anında güvenilir sayılmamalıdır." },
+  c3: { title:"3-2-1 yedekleme kuralını uygulayın", section:"Bölüm 2.5", note:"En az bir yedek kopyanın ayrı bir ortamda olması, fidye yazılımına karşı kritik bir savunmadır." },
+  c4: { title:"Çalışanlara kimlik avı eğitimi verin", section:"Bölüm 2.3", note:"Çoğu saldırı, teknik açıktan değil insan hatasından başlar." },
+  c5: { title:"Eski çalışan hesaplarını kapatın", section:"Bölüm 2.6", note:"Açık kalan hesaplar, iç tehdit ve yetkisiz erişim riskini doğrudan artırır." },
+  c6: { title:"En az yetki ilkesini uygulayın", section:"Bölüm 2.6", note:"Gereksiz erişim, bir hesap ele geçirildiğinde saldırının yayılma alanını büyütür." },
+  c7: { title:"Bulut sağlayıcı sertifikalarını kontrol edin", section:"Bölüm 3.4", note:"Paylaşılan sorumluluk modelinde, sağlayıcının güvenlik standardı sizi de etkiler." },
+  c8: { title:"Paylaşılan dosya erişimlerini gözden geçirin", section:"Bölüm 3.3", note:"\u201cHerkese açık\u201d bırakılan klasörler, en sık görülen bulut güvenliği hatasıdır." },
+  c9: { title:"Yapay zekâ kullanım kuralı oluşturun", section:"Bölüm 5.4", note:"Hassas veriyi yapay zekâ araçlarına yapıştırmadan önce basit bir kural seti gerekir." },
+  c10: { title:"IoT/OT cihazlarının varsayılan şifrelerini değiştirin", section:"Bölüm 8.4", note:"Varsayılan şifreler, üretim hattına yönelik en kolay giriş noktasıdır." },
+  c11: { title:"Ofis ve üretim ağını ayırın (segmentasyon)", section:"Bölüm 8.4", note:"Ağ ayrımı olmadan, ofisteki bir saldırı doğrudan üretim hattına sıçrayabilir." },
+  c12: { title:"Veri envanteri çıkarın", section:"Bölüm 4.5", note:"Hangi veriyi neden topladığınızı bilmemek, KVKK/Özbekistan mevzuatı açısından risk taşır." },
+  c13: { title:"Basit bir aydınlatma metni ekleyin", section:"Bölüm 4.3–4.4", note:"Müşteriye veri kullanımını açıklamak, hem yasal hem de güven açısından gereklidir." },
+  c14: { title:"Bir sayfalık olay müdahale planı yazın", section:"Bölüm 7.2", note:"Panik anında doğru kararı vermek, önceden yazılmış basit bir plan ile çok daha kolaydır." },
+  c15: { title:"Siber güvenlik sorumlusu belirleyin", section:"Bölüm 8.5", note:"Tam zamanlı bir uzman olmasa da, sorumluluğun birine ait olması takibi sağlar." },
+};
+
+const ALL_ITEMS = CATEGORIES.flatMap(c => c.items.map(it => ({...it, category: c.name})));
+const TOTAL = ALL_ITEMS.length;
+
+const checkedState = {};
+ALL_ITEMS.forEach(it => checkedState[it.id] = false);
+
+function buildUI(){
+  const container = document.getElementById('categories');
+  container.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const block = document.createElement('div');
+    block.className = 'category-block';
+
+    const header = document.createElement('div');
+    header.className = 'cat-header';
+    const title = document.createElement('div');
+    title.className = 'cat-title';
+    title.textContent = cat.name;
+    const score = document.createElement('div');
+    score.className = 'cat-score';
+    score.id = 'catscore-' + cat.name.replace(/\s/g,'_');
+    header.appendChild(title);
+    header.appendChild(score);
+    block.appendChild(header);
+
+    cat.items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'check-item';
+      row.id = 'row-' + item.id;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = 'chk-' + item.id;
+
+      const label = document.createElement('label');
+      label.setAttribute('for', 'chk-' + item.id);
+      label.textContent = item.text;
+
+      row.appendChild(checkbox);
+      row.appendChild(label);
+      row.addEventListener('click', (e) => {
+        if(e.target.tagName.toLowerCase() !== 'input'){
+          checkbox.checked = !checkbox.checked;
+        }
+        toggle(item.id, checkbox.checked);
+      });
+      checkbox.addEventListener('click', (e) => e.stopPropagation());
+      checkbox.addEventListener('change', () => toggle(item.id, checkbox.checked));
+
+      block.appendChild(row);
+    });
+
+    container.appendChild(block);
+  });
+}
+
+function toggle(id, val){
+  checkedState[id] = val;
+  document.getElementById('row-' + id).classList.toggle('checked', val);
+  renderScore();
+}
+
+function renderScore(){
+  const checkedCount = Object.values(checkedState).filter(Boolean).length;
+  const pct = checkedCount / TOTAL;
+
+  document.getElementById('score-circle').textContent = checkedCount + '/' + TOTAL;
+
+  let tierLabel, color;
+  if(checkedCount >= 12){ tierLabel = 'Güçlü bir temel — ince ayar seviyesi'; color = 'var(--green)'; }
+  else if(checkedCount >= 8){ tierLabel = 'Makul bir başlangıç — bazı boşluklar var'; color = 'var(--cyan)'; }
+  else if(checkedCount >= 4){ tierLabel = 'Temel adımlar eksik — öncelik gerektirir'; color = 'var(--amber)'; }
+  else { tierLabel = 'Acil öncelik gerektiren bir durum'; color = 'var(--red)'; }
+
+  document.getElementById('score-tier').textContent = tierLabel;
+  document.getElementById('score-circle').style.borderColor = color;
+  document.getElementById('score-circle').style.color = color;
+  const fill = document.getElementById('score-bar-fill');
+  fill.style.width = (pct*100) + '%';
+  fill.style.background = color;
+
+  // Kategori bazlı skor
+  CATEGORIES.forEach(cat => {
+    const total = cat.items.length;
+    const done = cat.items.filter(it => checkedState[it.id]).length;
+    const el = document.getElementById('catscore-' + cat.name.replace(/\s/g,'_'));
+    if(el) el.textContent = done + ' / ' + total;
+  });
+
+  renderPriorities();
+}
+
+function renderPriorities(){
+  const list = document.getElementById('priority-list');
+  list.innerHTML = '';
+  const missing = ALL_ITEMS.filter(it => !checkedState[it.id]);
+
+  if(missing.length === 0){
+    list.innerHTML = '<div class="all-good-msg">Tüm maddeleri işaretlediniz. Bu, güçlü bir temel olduğunu gösterir — ancak siber güvenlik tek seferlik bir proje değil, sürekli bir disiplindir (Bölüm 6, NIST CSF döngüsü). Bu listeyi üç ayda bir tekrar gözden geçirmeniz önerilir.</div>';
+    return;
+  }
+
+  missing.slice(0, 5).forEach((item, i) => {
+    const guidance = PRIORITY_GUIDANCE[item.id];
+    const row = document.createElement('div');
+    row.className = 'priority-item';
+    row.innerHTML =
+      '<div class="priority-rank">' + (i+1) + '</div>' +
+      '<div class="priority-text"><b>' + guidance.title + '</b>' +
+      '<span class="cat-tag">' + item.category + ' · ' + guidance.section + '</span>' +
+      '<div style="margin-top:4px; color:var(--text-dim);">' + guidance.note + '</div></div>';
+    list.appendChild(row);
+  });
+
+  if(missing.length > 5){
+    const more = document.createElement('div');
+    more.style.cssText = 'font-family:var(--mono); font-size:12px; color:var(--text-dim); margin-top:10px; text-align:center;';
+    more.textContent = '+ ' + (missing.length - 5) + ' madde daha işaretlenmeyi bekliyor';
+    list.appendChild(more);
+  }
+}
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  ALL_ITEMS.forEach(it => checkedState[it.id] = false);
+  document.querySelectorAll('.check-item input').forEach(c => c.checked = false);
+  document.querySelectorAll('.check-item').forEach(r => r.classList.remove('checked'));
+  renderScore();
+});
+
+buildUI();
+renderScore();
+</script>
+</body>
+</html>

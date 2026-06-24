@@ -422,6 +422,34 @@ const SCENARIOS = [
       "Gerçek otopark/ödeme sistemleri genellikle sabit, makinenin kendi ekranına entegre ödeme yöntemleri sunar; ek, yapıştırılmış etiketler şüphe uyandırmalıdır.",
       "Güvenli davranış: QR kodu taratmadan önce makinenin resmi ödeme yöntemini (kart okuyucu, resmi uygulama) tercih etmek veya görevliye sormaktır."
     ]
+  },
+  {
+    channel: "SMS",
+    from: "Kargo Firması",
+    fromsub: "+90 850 XXX XX XX",
+    subject: "",
+    body: "Kolinizin teslimat tahmini: bugun 14:00-18:00 arasi. Takip numaranizi firmamizin resmi uygulamasindan goruntuleyebilirsiniz. Kapida odeme secenegi mevcuttur. Iyi gunler.",
+    isPhishing: false,
+    clues: [
+      "Mesajda herhangi bir bağlantıya tıklama talebi veya ödeme bilgisi istenmiyor; sadece bilgilendirme amaçlı.",
+      "Aciliyet, tehdit veya \u201chesabınız kapanacak\u201d gibi korku unsuru içermiyor.",
+      "Takip bilgisini firmanın kendi resmi uygulamasından görüntülemeyi öneriyor; dışarıdan şüpheli bir bağlantı vermiyor.",
+      "Yine de teslimat mesajlarında ekstra bir \u201cgümrük/ek ücret\u201d talebi olursa, bu her zaman şüpheyle karşılanmalı ve resmi kanaldan teyit edilmelidir."
+    ]
+  },
+  {
+    channel: "E-POSTA",
+    from: "Yazılım Sağlayıcınız — Destek",
+    fromsub: "destek@kullandiginiz-erp-yazilimi.com",
+    subject: "Planlı bakım çalışması — 27 Haziran 02:00–04:00",
+    body: "Merhaba,\n\nSistemlerimizde planlı bir bakım çalışması yapılacaktır. 27 Haziran gecesi 02:00–04:00 arasında hizmete kısa süreli erişim kesintileri olabilir. Herhangi bir işlem yapmanız gerekmemektedir; bu sadece bilgilendirme amaçlıdır.\n\nAnlayışınız için teşekkür ederiz.",
+    isPhishing: false,
+    clues: [
+      "Mesaj kullandığınız yazılımın bilinen, kayıtlı destek adresinden geliyor.",
+      "Herhangi bir bağlantıya tıklama, şifre girme veya bilgi doğrulama talebi yok; sadece bilgilendirme.",
+      "İçerik teknik olarak makul ve olağan bir IT iletişimi örüntüsüne uyuyor (planlı bakım bildirimi).",
+      "Genel kural: bir bildirim sizden hiçbir eylem istemiyorsa (sadece bilgi veriyorsa), risk seviyesi düşüktür; risk, sizden bir eylem (tıklama, ödeme, bilgi paylaşımı) istendiğinde artar."
+    ]
   }
 ];
 
@@ -442,7 +470,7 @@ function shuffle(arr){
 function buildProgress(){
   const row = document.getElementById('progress-row');
   row.innerHTML = '';
-  for(let i=0;i<SCENARIOS.length;i++){
+  for(let i=0;i<order.length;i++){
     const seg = document.createElement('div');
     seg.className = 'progress-seg';
     row.appendChild(seg);
@@ -456,7 +484,7 @@ function updateProgressUI(){
     if(i < idx) s.classList.add('done');
     else if(i === idx) s.classList.add('current');
   });
-  document.getElementById('progress-text').textContent = 'Soru ' + (idx+1) + ' / ' + SCENARIOS.length;
+  document.getElementById('progress-text').textContent = 'Soru ' + (idx+1) + ' / ' + order.length;
   document.getElementById('score-text').textContent = 'Doğru: ' + score;
 }
 
@@ -542,8 +570,16 @@ function showResult(){
   document.getElementById('result-msg').textContent = msg;
 }
 
+function pickBalancedTen(){
+  const phishing = shuffle(SCENARIOS.filter(s => s.isPhishing));
+  const safe = shuffle(SCENARIOS.filter(s => !s.isPhishing));
+  // 5 şüpheli + 5 güvenli sabit denge; havuzda en az 5'er olduğundan emin (7 şüpheli, 5 güvenli mevcut)
+  const picked = phishing.slice(0,5).concat(safe.slice(0,5));
+  return shuffle(picked);
+}
+
 function restart(){
-  order = shuffle(SCENARIOS);
+  order = pickBalancedTen();
   idx = 0;
   score = 0;
   document.getElementById('result-screen').style.display = 'none';

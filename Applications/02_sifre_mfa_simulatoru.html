@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Şifre Gücü &amp; MFA Simülatörü — Modül 7 Atölyesi</title>
+<style>
+  :root{
+    --bg:#0F1B2D;
+    --card:#16263F;
+    --card-border:#23395C;
+    --text:#E8EDF4;
+    --text-dim:#8294B0;
+    --amber:#F2A23C;
+    --cyan:#36C2CE;
+    --red:#E25C5C;
+    --green:#4FD18B;
+    --mono: "SF Mono","Consolas","Menlo",monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 16px 60px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+  .wrap{ width:100%; max-width:640px; }
+
+  header{ margin-bottom:22px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:0.12em;
+    color:var(--cyan); text-transform:uppercase;
+    border-top:1px solid var(--card-border); padding-top:10px; margin-bottom:10px;
+    display:flex; justify-content:space-between;
+  }
+  h1{ font-size:28px; line-height:1.15; margin:0 0 8px; font-weight:800; letter-spacing:-0.01em; }
+  .sub{ color:var(--text-dim); font-size:15px; line-height:1.5; margin:0; }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:18px;
+  }
+  .card h2{ font-size:14px; margin:0 0 14px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); font-family:var(--mono); }
+
+  .input-row{ position:relative; margin-bottom:6px; }
+  #pw-input{
+    width:100%;
+    font-family:var(--mono);
+    font-size:18px;
+    padding:14px 46px 14px 16px;
+    border-radius:10px;
+    border:1px solid var(--card-border);
+    background:#0F1B2D;
+    color:var(--text);
+    letter-spacing:0.02em;
+  }
+  #pw-input:focus-visible{ outline:2px solid var(--cyan); outline-offset:1px; }
+  #toggle-visibility{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    background:transparent; border:none; color:var(--text-dim);
+    cursor:pointer; font-size:13px; font-family:var(--mono);
+    padding:8px;
+  }
+  .hint{ font-size:12px; color:var(--text-dim); margin:8px 0 0; line-height:1.5; }
+  .hint b{ color:var(--text); }
+
+  .strength-row{ display:flex; gap:6px; margin:16px 0 10px; }
+  .strength-seg{ flex:1; height:8px; border-radius:4px; background:#23395C; transition:background .25s; }
+
+  .strength-label{
+    font-family:var(--mono); font-weight:700; font-size:14px; margin-bottom:4px;
+  }
+
+  .metric-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;
+  }
+  .metric{
+    background:#0F1B2D; border:1px solid var(--card-border); border-radius:10px; padding:12px 14px;
+  }
+  .metric .m-label{ font-family:var(--mono); font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+  .metric .m-value{ font-size:17px; font-weight:800; }
+  .metric .m-value.warn{ color:var(--red); }
+  .metric .m-value.ok{ color:var(--green); }
+  .metric .m-value.mid{ color:var(--amber); }
+
+  .crack-explain{
+    font-size:13px; color:var(--text-dim); line-height:1.6; margin-top:14px;
+    border-left:2px solid var(--card-border); padding-left:12px;
+  }
+
+  /* MFA toggle kartı */
+  .mfa-toggle-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; }
+  .mfa-toggle-text{ font-size:14px; line-height:1.5; }
+  .mfa-toggle-text b{ display:block; font-size:16px; margin-bottom:2px; }
+  .switch{
+    position:relative; width:56px; height:30px; flex-shrink:0;
+  }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch .slider{
+    position:absolute; cursor:pointer; inset:0;
+    background:#3a4a63; border-radius:30px; transition:.25s;
+  }
+  .switch .slider:before{
+    position:absolute; content:""; height:24px; width:24px; left:3px; bottom:3px;
+    background:#E8EDF4; border-radius:50%; transition:.25s;
+  }
+  .switch input:checked + .slider{ background:var(--green); }
+  .switch input:checked + .slider:before{ transform:translateX(26px); }
+  .switch input:focus-visible + .slider{ outline:2px solid var(--cyan); outline-offset:2px; }
+
+  .mfa-result{
+    margin-top:16px; padding:16px; border-radius:10px;
+    border:1px solid var(--card-border); font-size:14px; line-height:1.6;
+    transition:border-color .25s, background .25s;
+  }
+  .mfa-result.off{ background:rgba(226,92,92,0.08); border-color:#4a2c2c; }
+  .mfa-result.on{ background:rgba(79,209,139,0.08); border-color:#2c4a3c; }
+  .mfa-result .tag{
+    font-family:var(--mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+    display:block; margin-bottom:6px;
+  }
+  .mfa-result.off .tag{ color:var(--red); }
+  .mfa-result.on .tag{ color:var(--green); }
+
+  .scenario-box{
+    font-size:13px; color:var(--text-dim); line-height:1.6; margin-top:18px;
+    background:#0F1B2D; border:1px solid var(--card-border); border-radius:10px; padding:14px 16px;
+  }
+  .scenario-box b{ color:var(--text); }
+
+  .common-list{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
+  }
+  .common-chip{
+    font-family:var(--mono); font-size:12px;
+    background:#0F1B2D; border:1px solid var(--card-border); border-radius:20px;
+    padding:6px 12px; cursor:pointer; color:var(--text-dim);
+    transition:border-color .15s, color .15s;
+  }
+  .common-chip:hover{ border-color:var(--cyan); color:var(--text); }
+
+  footer{
+    margin-top:14px; font-family:var(--mono); font-size:11px; color:var(--text-dim);
+    text-align:center; border-top:1px solid var(--card-border); padding-top:14px;
+    width:100%; max-width:640px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">
+      <span>TİKA · MODÜL 7 ATÖLYESİ</span>
+      <span>ARAÇ 02 / 04</span>
+    </div>
+    <h1>Şifreniz, bir saldırgana ne kadar dayanır?</h1>
+    <p class="sub">Aşağıya bir şifre yazın (gerçek şifrenizi değil, benzer bir örneği yazmanız önerilir). Tahmini kırılma süresini ve MFA'nın bu süreyi nasıl etkilediğini canlı olarak göreceksiniz.</p>
+  </header>
+
+  <div class="card">
+    <h2>[ ŞİFRE_GİRİŞİ ]</h2>
+    <div class="input-row">
+      <input id="pw-input" type="password" autocomplete="off" spellcheck="false" placeholder="Örnek bir şifre yazın…" />
+      <button id="toggle-visibility" type="button" aria-label="Şifreyi göster/gizle">GÖSTER</button>
+    </div>
+    <p class="hint">Güvenlik için: lütfen <b>gerçek</b> şifrenizi değil, gerçek şifrenizle aynı uzunluk ve yapıda <b>örnek/benzer</b> bir şifre yazın. Bu sayfa hiçbir veriyi kaydetmez veya göndermez — her şey kendi cihazınızda hesaplanır.</p>
+    <div class="common-list">
+      <button class="common-chip" type="button" data-pw="123456">123456</button>
+      <button class="common-chip" type="button" data-pw="Sirket2024">Sirket2024</button>
+      <button class="common-chip" type="button" data-pw="G7$mQ2#vL9pZ">G7$mQ2#vL9pZ</button>
+      <button class="common-chip" type="button" data-pw="kahve.masa.bulut.42">kahve.masa.bulut.42</button>
+    </div>
+
+    <div class="strength-label" id="strength-label">&nbsp;</div>
+    <div class="strength-row" id="strength-row">
+      <div class="strength-seg"></div><div class="strength-seg"></div><div class="strength-seg"></div><div class="strength-seg"></div><div class="strength-seg"></div>
+    </div>
+
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="m-label">Tahmini Kombinasyon</div>
+        <div class="m-value" id="m-combos">—</div>
+      </div>
+      <div class="metric">
+        <div class="m-label">Kaba Kuvvetle Kırılma Süresi</div>
+        <div class="m-value" id="m-time">—</div>
+      </div>
+    </div>
+
+    <p class="crack-explain" id="crack-explain">
+      Yukarıdaki tahmin, modern bir bilgisayarın saniyede yaklaşık 10 milyar deneme yapabildiği (çevrimdışı bir kaba kuvvet senaryosu) basitleştirilmiş bir hesaba dayanır. Gerçek dünyada hız; saldırganın donanımına, hesabın deneme sınırına ve şifrenin yaygın listelerde olup olmamasına göre değişir. Amaç kesin bir rakam değil, <b>göreceli güç farkını</b> hissettirmektir.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>[ MFA_ETKİSİ ]</h2>
+    <div class="mfa-toggle-row">
+      <div class="mfa-toggle-text">
+        <b>Çok Faktörlü Kimlik Doğrulama (MFA)</b>
+        Bu hesapta MFA açık mı?
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="mfa-checkbox" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="mfa-result off" id="mfa-result">
+      <span class="tag">MFA KAPALI</span>
+      <span id="mfa-text">Şifre tek başına kapı bekçisi. Şifre çalınır, tahmin edilir veya bir veri sızıntısında ele geçirilirse, saldırgan doğrudan hesaba girer. Yukarıdaki kırılma süresi, bu hesabın <b>gerçek</b> güvenlik süresidir.</span>
+    </div>
+
+    <p class="scenario-box">
+      <b>Neden bu kadar önemli?</b> Bölüm 2.4'te işlendiği gibi, MFA açıldığında saldırgan şifrenizi bilse bile telefonunuza gelen kodu veya onay isteğini göremez. Bu nedenle MFA, dünya çapında en ucuz ve en etkili tek güvenlik önlemi olarak kabul edilir — çoğu yazılımda ücretsiz olarak açılabilir.
+    </p>
+  </div>
+
+  <footer>
+    TİKA İŞ MODELİ EĞİTİMİ — MODÜL 7: SİBER GÜVENLİK, VERİ KORUMA VE DİJİTAL RİSKLER<br>
+    Bu araç tamamen çevrimdışı çalışır · hiçbir tuş vuruşu kaydedilmez veya gönderilmez
+  </footer>
+</div>
+
+<script>
+// ============================================================
+// ŞİFRE GÜCÜ HESABI
+// Basit ama eğitici bir karakter-uzayı (charset) + entropi modeli kullanılır.
+// Amaç akademik kesinlik değil, KOBİ katılımcısına "uzunluk ve çeşitlilik
+// neden önemli" sorusunu sezgisel olarak hissettirmektir.
+// ============================================================
+
+const COMMON_PASSWORDS = new Set([
+  "123456","123456789","password","qwerty","111111","12345678","abc123",
+  "1234567","password1","12345","1q2w3e4r","sifre123","sirket123","admin",
+  "qwertyuiop","asdfgh","1q2w3e","welcome","letmein","monkey","dragon"
+]);
+
+function charsetSize(pw){
+  let size = 0;
+  if(/[a-z]/.test(pw)) size += 26;
+  if(/[A-Z]/.test(pw)) size += 26;
+  if(/[0-9]/.test(pw)) size += 10;
+  if(/[^a-zA-Z0-9]/.test(pw)) size += 33; // yaygın özel karakterler için kabaca tahmin
+  return size || 1;
+}
+
+function formatBigNumber(n){
+  if(n < 1000) return Math.round(n).toString();
+  const units = ["", "bin", "milyon", "milyar", "trilyon", "katrilyon", "kentilyon"];
+  let unitIdx = 0;
+  let scaled = n;
+  while(scaled >= 1000 && unitIdx < units.length-1){
+    scaled /= 1000;
+    unitIdx++;
+  }
+  // Birim listesi tükendiyse (kentilyonun üstü), bilimsel gösterime geç
+  if(unitIdx === units.length-1 && scaled >= 1000){
+    const exp = Math.floor(Math.log10(n));
+    const mantissa = n / Math.pow(10, exp);
+    return mantissa.toFixed(1) + " × 10^" + exp;
+  }
+  return scaled.toFixed(1).replace(/\.0$/,'') + " " + units[unitIdx];
+}
+
+function formatDuration(seconds){
+  if(seconds < 1) return "1 saniyeden az";
+  const units = [
+    ["yıl", 365*24*3600],
+    ["gün", 24*3600],
+    ["saat", 3600],
+    ["dakika", 60],
+    ["saniye", 1],
+  ];
+  // çok büyük sayılar için (yıl bazında) formatBigNumber kullan
+  const years = seconds / (365*24*3600);
+  if(years >= 1000){
+    return formatBigNumber(years) + " yıl";
+  }
+  for(const [label, secs] of units){
+    if(seconds >= secs){
+      const val = seconds / secs;
+      return (val >= 100 ? Math.round(val) : val.toFixed(1).replace(/\.0$/,'')) + " " + label;
+    }
+  }
+  return Math.round(seconds) + " saniye";
+}
+
+const GUESSES_PER_SECOND = 10_000_000_000; // 10 milyar/sn — basitleştirilmiş çevrimdışı kaba kuvvet senaryosu
+
+function evaluate(pw){
+  if(pw.length === 0){
+    return { level:0, combos:null, seconds:null, isCommon:false, length:0 };
+  }
+  const isCommon = COMMON_PASSWORDS.has(pw.toLowerCase());
+  const cs = charsetSize(pw);
+  const combos = Math.pow(cs, pw.length);
+  // Ortalama kırılma süresi: olası kombinasyonların yarısı denenir varsayımı
+  let seconds = (combos / 2) / GUESSES_PER_SECOND;
+  if(isCommon){
+    seconds = Math.random() * 2; // yaygın şifre listelerinde ilk denemelerde bulunur
+  }
+
+  // 0-4 arası kabaca güç seviyesi (görsel bar için)
+  let level;
+  if(isCommon) level = 0;
+  else if(pw.length < 6) level = 0;
+  else if(seconds < 60) level = 1;
+  else if(seconds < 3600*24) level = 2;
+  else if(seconds < 3600*24*365*5) level = 3;
+  else level = 4;
+
+  return { level, combos, seconds, isCommon, length:pw.length };
+}
+
+const STRENGTH_META = [
+  { label:"ÇOK ZAYIF", color:"var(--red)" },
+  { label:"ZAYIF", color:"var(--red)" },
+  { label:"ORTA", color:"var(--amber)" },
+  { label:"İYİ", color:"var(--cyan)" },
+  { label:"ÇOK GÜÇLÜ", color:"var(--green)" },
+];
+
+const pwInput = document.getElementById('pw-input');
+const toggleBtn = document.getElementById('toggle-visibility');
+const strengthLabel = document.getElementById('strength-label');
+const strengthSegs = document.querySelectorAll('.strength-seg');
+const mCombos = document.getElementById('m-combos');
+const mTime = document.getElementById('m-time');
+const mfaCheckbox = document.getElementById('mfa-checkbox');
+const mfaResult = document.getElementById('mfa-result');
+const mfaText = document.getElementById('mfa-text');
+
+let lastEval = evaluate("");
+
+function render(){
+  const pw = pwInput.value;
+  lastEval = evaluate(pw);
+  const { level, combos, seconds, isCommon, length } = lastEval;
+
+  if(length === 0){
+    strengthLabel.innerHTML = '&nbsp;';
+    strengthSegs.forEach(s => s.style.background = '#23395C');
+    mCombos.textContent = '—';
+    mTime.textContent = '—';
+    mCombos.className = 'm-value';
+    mTime.className = 'm-value';
+  } else {
+    const meta = STRENGTH_META[level];
+    strengthLabel.innerHTML = '<span style="color:'+meta.color+'">' + meta.label + '</span>' +
+      (isCommon ? ' <span style="color:var(--text-dim); font-weight:400; font-size:12px;">— bu şifre, en sık kullanılan şifre listelerinde yer alıyor</span>' : '');
+    strengthSegs.forEach((s,i) => {
+      s.style.background = i <= level ? meta.color : '#23395C';
+    });
+    mCombos.textContent = isCommon ? '< 100 (bilinen liste)' : '~' + formatBigNumber(combos);
+    mTime.textContent = formatDuration(seconds);
+    const cls = level <= 1 ? 'warn' : (level === 2 ? 'mid' : 'ok');
+    mCombos.className = 'm-value ' + cls;
+    mTime.className = 'm-value ' + cls;
+  }
+
+  updateMfaPanel();
+}
+
+function updateMfaPanel(){
+  const mfaOn = mfaCheckbox.checked;
+  const { length } = lastEval;
+
+  mfaResult.className = 'mfa-result ' + (mfaOn ? 'on' : 'off');
+  const tag = mfaResult.querySelector('.tag');
+
+  if(mfaOn){
+    tag.textContent = 'MFA AÇIK';
+    if(length === 0){
+      mfaText.innerHTML = 'MFA açıkken, saldırgan şifrenizi tahmin etse veya çalsa bile, telefonunuza gelen kodu veya onay isteğini göremeyeceği için hesaba giriş yapamaz. Şifre artık <b>tek başarısızlık noktası</b> olmaktan çıkar.';
+    } else {
+      mfaText.innerHTML = 'Bu şifre tahmin edilse veya bir veri sızıntısında ele geçirilse bile, MFA açık olduğu için saldırgan ikinci doğrulama adımında durur. Hesabınız, şifrenin gücünden <b>bağımsız olarak</b> ek bir katmanla korunuyor.';
+    }
+  } else {
+    tag.textContent = 'MFA KAPALI';
+    if(length === 0){
+      mfaText.innerHTML = 'Şifre tek başına kapı bekçisi. Şifre çalınır, tahmin edilir veya bir veri sızıntısında ele geçirilirse, saldırgan doğrudan hesaba girer.';
+    } else {
+      mfaText.innerHTML = 'Şifre tek başına kapı bekçisi. Bu şifre ele geçirilirse (yukarıdaki süre içinde tahmin edilerek, veya bir veri sızıntısı listesinden doğrudan), saldırgan <b>hiçbir ek engelle karşılaşmadan</b> hesaba girer.';
+    }
+  }
+}
+
+pwInput.addEventListener('input', render);
+mfaCheckbox.addEventListener('change', updateMfaPanel);
+
+toggleBtn.addEventListener('click', () => {
+  const isPw = pwInput.type === 'password';
+  pwInput.type = isPw ? 'text' : 'password';
+  toggleBtn.textContent = isPw ? 'GİZLE' : 'GÖSTER';
+});
+
+document.querySelectorAll('.common-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    pwInput.value = chip.getAttribute('data-pw');
+    pwInput.focus();
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

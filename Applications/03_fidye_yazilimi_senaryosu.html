@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fidye Yazılımı Senaryosu — Modül 7 Atölyesi</title>
+<style>
+  :root{
+    --bg:#0F1B2D;
+    --card:#16263F;
+    --card-border:#23395C;
+    --text:#E8EDF4;
+    --text-dim:#8294B0;
+    --amber:#F2A23C;
+    --cyan:#36C2CE;
+    --red:#E25C5C;
+    --green:#4FD18B;
+    --mono: "SF Mono","Consolas","Menlo",monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 16px 60px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+  .wrap{ width:100%; max-width:640px; }
+
+  header{ margin-bottom:22px; }
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:0.12em;
+    color:var(--cyan); text-transform:uppercase;
+    border-top:1px solid var(--card-border); padding-top:10px; margin-bottom:10px;
+    display:flex; justify-content:space-between;
+  }
+  h1{ font-size:26px; line-height:1.2; margin:0 0 8px; font-weight:800; letter-spacing:-0.01em; }
+  .sub{ color:var(--text-dim); font-size:15px; line-height:1.5; margin:0; }
+
+  .clock-row{
+    display:flex; align-items:center; gap:10px; margin:18px 0 4px;
+    font-family:var(--mono); font-size:13px; color:var(--amber);
+  }
+  .clock-row .dot{ width:8px; height:8px; border-radius:50%; background:var(--red); animation:pulse 1.6s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+  .scene-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:22px 20px;
+    margin-bottom:18px;
+    animation:rise .35s ease;
+  }
+  @keyframes rise{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+  .scene-tag{
+    font-family:var(--mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-dim); margin-bottom:10px; display:block;
+  }
+  .scene-text{ font-size:16px; line-height:1.65; margin:0; }
+  .scene-text b{ color:var(--amber); }
+  .scene-text .good-note{ color:var(--green); }
+  .scene-text .bad-note{ color:var(--red); }
+
+  .stat-row{
+    display:flex; gap:10px; margin:16px 0 0;
+  }
+  .stat-pill{
+    flex:1; background:#0F1B2D; border:1px solid var(--card-border); border-radius:10px;
+    padding:10px 12px; text-align:center;
+  }
+  .stat-pill .s-label{ font-family:var(--mono); font-size:10px; color:var(--text-dim); text-transform:uppercase; margin-bottom:3px; }
+  .stat-pill .s-value{ font-size:16px; font-weight:800; }
+
+  .choices{ display:flex; flex-direction:column; gap:10px; }
+  .choice-btn{
+    font-family:inherit; font-size:15px; text-align:left;
+    padding:15px 16px; border-radius:12px;
+    border:1px solid var(--card-border); background:var(--card);
+    color:var(--text); cursor:pointer;
+    transition:transform .15s, border-color .15s, background .15s;
+    line-height:1.4;
+  }
+  .choice-btn:hover{ transform:translateY(-1px); border-color:var(--cyan); background:#1c2f4d; }
+  .choice-btn:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+  .choice-btn .c-num{ font-family:var(--mono); color:var(--cyan); margin-right:8px; }
+
+  .restart-btn{
+    width:100%; font-family:inherit; font-size:15px; font-weight:700;
+    padding:14px; border-radius:12px; border:none;
+    background:var(--amber); color:#1a1304; cursor:pointer; margin-top:6px;
+    transition:filter .15s;
+  }
+  .restart-btn:hover{ filter:brightness(1.08); }
+  .restart-btn:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+
+  .ending-banner{
+    font-family:var(--mono); font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
+    padding:8px 14px; border-radius:8px; display:inline-block; margin-bottom:12px;
+  }
+  .ending-banner.bad{ background:rgba(226,92,92,0.15); color:var(--red); }
+  .ending-banner.mid{ background:rgba(242,162,60,0.15); color:var(--amber); }
+  .ending-banner.good{ background:rgba(79,209,139,0.15); color:var(--green); }
+
+  .lesson-box{
+    margin-top:16px; padding:14px 16px; border-radius:10px;
+    background:#0F1B2D; border:1px solid var(--card-border);
+    font-size:13px; color:var(--text-dim); line-height:1.6;
+  }
+  .lesson-box b{ color:var(--text); }
+  .lesson-box ul{ margin:8px 0 0; padding-left:18px; }
+  .lesson-box li{ margin-bottom:5px; }
+
+  footer{
+    margin-top:14px; font-family:var(--mono); font-size:11px; color:var(--text-dim);
+    text-align:center; border-top:1px solid var(--card-border); padding-top:14px;
+    width:100%; max-width:640px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">
+      <span>TİKA · MODÜL 7 ATÖLYESİ</span>
+      <span>ARAÇ 03 / 04</span>
+    </div>
+    <h1>Bir Salı Sabahı: Fidye Yazılımı Senaryosu</h1>
+    <p class="sub">Kurgusal bir KOBİ'nin başına geçiyorsunuz. Her adımda bir karar vereceksiniz; sonuç, önceden aldığınız önlemlere ve o anda verdiğiniz kararlara göre değişecek.</p>
+  </header>
+
+  <div id="game-screen">
+    <div class="clock-row" id="clock-row" style="display:none;">
+      <span class="dot"></span>
+      <span id="clock-text">SALDIRIDAN SONRA: 0 SAAT</span>
+    </div>
+
+    <div class="scene-card" id="scene-card">
+      <span class="scene-tag" id="scene-tag">SAHNE 1 / 5</span>
+      <p class="scene-text" id="scene-text"></p>
+      <div class="stat-row" id="stat-row" style="display:none;"></div>
+    </div>
+
+    <div class="choices" id="choices"></div>
+  </div>
+
+  <footer>
+    TİKA İŞ MODELİ EĞİTİMİ — MODÜL 7: SİBER GÜVENLİK, VERİ KORUMA VE DİJİTAL RİSKLER<br>
+    Bu senaryo kurgusaldır; gerçek olaylardaki yaygın örüntüleri eğitim amacıyla bir araya getirir
+  </footer>
+</div>
+
+<script>
+// ============================================================
+// FİDYE YAZILIMI KARAR AĞACI
+// Modül 7 / Bölüm 2.2, Bölüm 7 ve Bölüm 10 (Vaka Çalışması 1) ile uyumludur.
+// Yapı: düğümler (node) halinde dallanan bir hikaye. Her düğüm bir sahne
+// metni ve seçenekler içerir; seçenekler bir sonraki düğüme veya bir
+// sonuca (ending) yönlendirir. State, geçmiş kararlara göre sonu etkiler.
+// ============================================================
+
+const state = {
+  hasBackup: null,      // yedek var mı (Salı'dan önce alınmış karar varsayımı, ilk sahnede belirlenir)
+  mfaOn: null,
+  paidRansom: null,
+  notifiedAuthorities: null,
+};
+
+let currentNode = "start";
+let history = [];
+
+const NODES = {
+
+  start: {
+    tag: "SAHNE 1 / 5 · SALI, SABAH 09:14",
+    text: "Muhasebe departmanınızdaki bir çalışan, \u201ckargo takip bildirimi\u201d görünümlü bir e-postadaki ekli dosyayı açtı. Birkaç dakika sonra ekranında bir uyarı belirdi: <b>\u201cTüm dosyalarınız şifrelendi.\u201d</b> Diğer bilgisayarlardaki paylaşılan sunucu da etkilenmiş görünüyor.",
+    choices: [
+      { label: "Hemen o bilgisayarı ve ağ bağlantısını kapat, sonra durumu değerlendir.", next: "isolate_good" },
+      { label: "Önce ne olduğunu tam anlamak için ekrandaki mesajı incelemeye devam et.", next: "isolate_delay" },
+    ]
+  },
+
+  isolate_good: {
+    tag: "SAHNE 2 / 5 · 09:20",
+    text: "Doğru refleks: cihazı ağdan ayırdınız. Bu, zararlı yazılımın diğer paylaşılan sürücülere ve bilgisayarlara <b>yayılmasını büyük ölçüde sınırlandırdı</b>. Şimdi şirketinizin geçmişte aldığı önlemler devreye giriyor. Geriye dönüp bakalım: şirketinizde düzenli ve <b>test edilmiş</b> bir veri yedeği var mıydı?",
+    choices: [
+      { label: "Evet — düzenli yedek alıyorduk ve geri yüklemeyi test etmiştik.", next: () => { state.hasBackup = true; return "backup_yes"; } },
+      { label: "Yedek alıyorduk ama hiç test etmemiştik.", next: () => { state.hasBackup = "untested"; return "backup_untested"; } },
+      { label: "Hayır, düzenli bir yedeğimiz yoktu.", next: () => { state.hasBackup = false; return "backup_no"; } },
+    ]
+  },
+
+  isolate_delay: {
+    tag: "SAHNE 2 / 5 · 09:35",
+    text: "Mesajı incelerken geçen <b>21 dakika</b> boyunca, zararlı yazılım ağdaki paylaşılan sürücüler üzerinden yayılmaya devam etti. Şimdi üç bilgisayar daha etkilenmiş durumda. Bu gecikme, olayın kapsamını büyütmüş olabilir — ama yine de şimdi cihazı ağdan ayırmanız gerekiyor. Geçmişe dönüp bakalım: şirketinizde düzenli ve test edilmiş bir veri yedeği var mıydı?",
+    choices: [
+      { label: "Evet — düzenli yedek alıyorduk ve geri yüklemeyi test etmiştik.", next: () => { state.hasBackup = true; return "backup_yes"; } },
+      { label: "Yedek alıyorduk ama hiç test etmemiştik.", next: () => { state.hasBackup = "untested"; return "backup_untested"; } },
+      { label: "Hayır, düzenli bir yedeğimiz yoktu.", next: () => { state.hasBackup = false; return "backup_no"; } },
+    ]
+  },
+
+  backup_yes: {
+    tag: "SAHNE 3 / 5 · 10:10",
+    text: "İyi haber: test edilmiş bir yedeğiniz var. Saldırgan ekranda 72 saat içinde ödeme yapılmazsa, ele geçirdiği bazı dosyaları (müşteri listesi, tasarımlar) ifşa edeceğini yazıyor — bu, <b>\u201cçifte şantaj\u201d</b> taktiğidir. Yedeğiniz dosyaları geri getirebilir, ama sızdırma tehdidini ortadan kaldırmaz. Şimdi ne yaparsınız?",
+    choices: [
+      { label: "Fidyeyi ödemeden, yedekten geri yükleme sürecini başlat ve bir BT desteğiyle temizlik yap.", next: "no_pay_backup" },
+      { label: "Sızdırma tehdidi yüzünden fidyeyi ödemeyi düşün.", next: "pay_despite_backup" },
+    ]
+  },
+
+  backup_untested: {
+    tag: "SAHNE 3 / 5 · 10:25",
+    text: "Yedek dosyaları var, ama hiç geri yükleme testi yapılmamış. BT desteğiniz geri yüklemeyi denediğinde, yedeklerin bir kısmının <b>bozuk veya eksik</b> olduğunu fark ediyorsunuz — son 2 aylık veri kurtarılamıyor. Saldırgan ayrıca 72 saat içinde ödeme yapılmazsa verileri ifşa edeceğini söylüyor.",
+    choices: [
+      { label: "Kurtarılabilen kısmı yedekten geri yükle, kalan 2 aylık veriyi kabul ederek devam et; fidyeyi ödeme.", next: "partial_recovery" },
+      { label: "Eksik veriyi geri almak için fidyeyi ödemeyi düşün.", next: "pay_for_partial" },
+    ]
+  },
+
+  backup_no: {
+    tag: "SAHNE 3 / 5 · 10:40",
+    text: "Yedek olmadığı ortaya çıktı. Şu anda elinizde üç seçenek var: muhasebe kayıtlarınız, sipariş geçmişiniz ve teknik çizimleriniz şifreli durumda. Saldırgan 15.000 dolar fidye istiyor ve 72 saat içinde ödenmezse müşteri verilerini rakiplere satacağını söylüyor.",
+    choices: [
+      { label: "Fidyeyi ödemeyi kabul et; en hızlı çözüm gibi görünüyor.", next: "pay_no_backup" },
+      { label: "Fidyeyi ödeme; profesyonel bir siber güvenlik firmasından destek al ve mümkün olanı kurtarmaya çalış.", next: "no_pay_no_backup" },
+    ]
+  },
+
+  no_pay_backup: {
+    tag: "SAHNE 4 / 5 · +18 SAAT",
+    text: "BT desteğinizle birlikte etkilenen sistemleri temizlediniz ve test edilmiş yedekten verilerinizi geri yüklediniz. Üretim/operasyon <b>1 gün içinde</b> büyük ölçüde normale döndü. Sızdırma tehdidi hâlâ geçerli; bu konuda ilgili mevzuat kapsamında (KVKK / Özbekistan Kişisel Veriler Kanunu) bir değerlendirme yapmanız gerekecek. Son adım: bu olayı kim(ler)e bildireceksiniz?",
+    choices: [
+      { label: "Etkilenen müşterileri bilgilendir ve gerekiyorsa ilgili veri koruma kurumuna bildirimde bulun.", next: () => { state.notifiedAuthorities = true; return "ending_good"; } },
+      { label: "Sorunu kendi içimizde çözdük, dışarıya açıklama yapmayalım.", next: () => { state.notifiedAuthorities = false; return "ending_mid_silent"; } },
+    ]
+  },
+
+  pay_despite_backup: {
+    tag: "SAHNE 4 / 5 · +30 SAAT",
+    text: "Fidyeyi ödediniz. Ancak saldırgan grubu yine de bir süre sonra elindeki veri kopyasının bir kısmını <b>yine de sızdırdı</b> — fidye ödemesi, sızdırmama sözünün tutulacağını garanti etmiyordu. Ayrıca yedeğiniz zaten kullanılabilir durumdaydı; bu ödeme, gerçekte gerekli olmayan bir maliyetti.",
+    choices: [
+      { label: "Devam et ve durumu değerlendir.", next: "ending_bad_paid_anyway" },
+    ]
+  },
+
+  partial_recovery: {
+    tag: "SAHNE 4 / 5 · +24 SAAT",
+    text: "Kurtarılabilen veriyle operasyona devam ettiniz, son 2 aylık bazı kayıtları yeniden oluşturmanız gerekti. Bu süreç ekstra zaman ve maliyet getirdi, ama firmanız saldırganın talebine bağımlı kalmadı. Test edilmemiş yedeğin bedelini, kayıp 2 aylık veriyle ödediniz.",
+    choices: [
+      { label: "Devam et ve dersleri değerlendir.", next: "ending_mid_partial" },
+    ]
+  },
+
+  pay_for_partial: {
+    tag: "SAHNE 4 / 5 · +40 SAAT",
+    text: "Fidyeyi ödediniz ve saldırgan size bir şifre çözme aracı gönderdi — ancak araç, dosyaların yalnızca bir kısmını başarıyla geri getirebildi; bazı dosyalar yine de bozuk kaldı. Hem parayı ödediniz hem de tüm veriyi geri alamadınız.",
+    choices: [
+      { label: "Devam et ve durumu değerlendir.", next: "ending_bad_paid_partial" },
+    ]
+  },
+
+  pay_no_backup: {
+    tag: "SAHNE 4 / 5 · +50 SAAT",
+    text: "Fidyeyi ödediniz. Saldırgan bir şifre çözme aracı gönderdi ve verilerinizin çoğunu geri aldınız. Ancak artık bilinen bir \u201cödeme yapan\u201d hedef olarak işaretlenmiş olabilirsiniz; güvenlik uzmanları, bir kez ödeyen firmaların gelecekte tekrar hedef olma riskinin arttığını belirtiyor. Ayrıca yedek altyapınız hâlâ yok.",
+    choices: [
+      { label: "Devam et ve durumu değerlendir.", next: "ending_mid_paid_worked" },
+    ]
+  },
+
+  no_pay_no_backup: {
+    tag: "SAHNE 4 / 5 · +72 SAAT",
+    text: "Fidyeyi ödemeden, uzman bir ekiple sistemleri temizlediniz. Şifrelenen dosyaların bir kısmı kalıcı olarak kayboldu; bazı eski kayıtları kâğıt arşivlerden ve müşterilerle yeniden teyitleşerek kısmen yeniden oluşturabildiniz. Süreç zorlu oldu, ama firmanız saldırganla hiçbir mali ilişkiye girmedi ve veri sızdırma riskini büyütecek bir ödeme yapmadı.",
+    choices: [
+      { label: "Devam et ve dersleri değerlendir.", next: "ending_mid_no_pay_lost_data" },
+    ]
+  },
+
+  // ================== SONLAR ==================
+
+  ending_good: {
+    ending: "good",
+    tag: "EN İYİ SONUÇ",
+    text: "Firmanız krizi en az kayıpla yönetti: hızlı izolasyon, test edilmiş yedek, fidye ödemeden geri dönüş ve şeffaf bildirim. Üretim/operasyon hızla normale döndü; itibar kaybı sınırlı kaldı çünkü müşterilerle açık iletişim kurdunuz.",
+    lessons: [
+      "Hızlı izolasyon (cihazı ağdan ayırma), yayılmayı durdurmanın en kritik ilk adımıdır.",
+      "Test edilmiş bir yedek, fidye ödeme zorunluluğunu ortadan kaldıran en güçlü tek savunmadır (Bölüm 2.5, 3-2-1 kuralı).",
+      "Şeffaf bildirim, kısa vadede zor görünse de, uzun vadede müşteri güvenini korur ve yasal yükümlülükleri (KVKK/Özbekistan mevzuatı) yerine getirir.",
+    ]
+  },
+
+  ending_mid_silent: {
+    ending: "mid",
+    tag: "KISMEN İYİ SONUÇ",
+    text: "Teknik olarak krizi başarıyla yönettiniz, ancak veri sızıntısını gizli tutma kararı risklidir. Eğer etkilenen veri kişisel veri içeriyorsa, bildirim yapmamak hem yasal hem de itibari bir risk taşır; sızıntı başka bir kanaldan ortaya çıkarsa güven kaybı çok daha büyük olabilir.",
+    lessons: [
+      "Teknik müdahale başarılı olsa da, yasal/etik bildirim yükümlülükleri ayrı bir karardır ve atlanmamalıdır.",
+      "KVKK ve Özbekistan Kişisel Veriler Kanunu kapsamında, kişisel veri içeren ihlallerde bildirim yükümlülükleri olabilir (Bölüm 4).",
+      "\u201cSessiz kalmak\u201d kısa vadede kolay görünse de, geç ortaya çıkan bir sızıntı itibar açısından daha yıkıcı olabilir."
+    ]
+  },
+
+  ending_mid_partial: {
+    ending: "mid",
+    tag: "KISMEN İYİ SONUÇ",
+    text: "Fidye ödemeden devam ettiniz, bu doğru bir karardı. Ancak test edilmemiş yedek, gerçek bir krizde işe yaramadığını gösterdi. \u201cYedeğimiz var\u201d demek ile \u201cyedeğimiz çalışıyor, test ettik\u201d demek arasındaki fark, bu senaryoda 2 aylık veri kaybına dönüştü.",
+    lessons: [
+      "Bir yedek, geri yüklenip çalıştığı doğrulanana kadar güvenilir sayılmamalıdır (Bölüm 2.5).",
+      "Fidye ödememe kararı doğruydu — sızdırma riski hâlâ yönetilmesi gereken ayrı bir konudur.",
+      "Düzenli yedekleme testi, yedeklemenin kendisi kadar önemlidir."
+    ]
+  },
+
+  ending_mid_no_pay_lost_data: {
+    ending: "mid",
+    tag: "KISMEN İYİ SONUÇ",
+    text: "Fidye ödemeden, ilkeli bir tavır gösterdiniz — bu doğru bir duruştu. Ama yedek altyapısının hiç olmaması, bazı verilerin kalıcı olarak kaybolmasına yol açtı. Bu, \u201cfidye ödememe\u201d kararının doğru olduğu, ama \u201cönlem almama\u201dnın bedelinin ağır olduğu bir sonuçtur.",
+    lessons: [
+      "Fidye ödememe kararı, saldırganı finansal olarak güçlendirmemek açısından doğrudur.",
+      "Ancak bu kararın bedelini ödemeden alabilmek, yalnızca önceden alınmış bir yedekleme altyapısıyla mümkündür.",
+      "Bu senaryo, \u201cönce önlem, sonra karar\u201d mantığının neden Bölüm 9'daki kontrol listesinin ilk maddeleri arasında olduğunu gösterir."
+    ]
+  },
+
+  ending_mid_paid_worked: {
+    ending: "mid",
+    tag: "KISA VADEDE ÇALIŞTI, UZUN VADEDE RİSKLİ",
+    text: "Bu sefer fidye ödemesi verileri geri getirdi — ama bu her zaman garanti değildir ve dünya çapındaki olaylarda sıkça başarısız olur. Ayrıca firmanız hâlâ yedek altyapısından yoksun; bir sonraki saldırıda aynı kararı tekrar vermek zorunda kalabilirsiniz.",
+    lessons: [
+      "Fidye ödemesi, verinin geri alınacağını hiçbir zaman garanti etmez; bu sefer işe yaramış olması, genel bir strateji haline getirilmemelidir.",
+      "Ödeme yapan firmalar, bilinen bir \u201chedef\u201d listesine girme riskiyle karşı karşıya kalabilir.",
+      "Bu sonuçtan çıkarılacak asıl ders: yedekleme altyapısı kurulmadan kapanan bir kriz, gerçekte kapanmamış demektir."
+    ]
+  },
+
+  ending_bad_paid_anyway: {
+    ending: "bad",
+    tag: "EN MALİYETLİ SONUÇ",
+    text: "Hem fidyeyi ödediniz hem de veriniz yine de bir kısmı sızdırıldı, hem de yedeğiniz zaten kurtarmaya yetecek durumdaydı. Bu, mevcut bir savunmayı kullanmadan ek bir mali kayba girme örneğidir.",
+    lessons: [
+      "Sızdırma tehdidi (çifte şantaj), fidye ödenmiş olsa da ortadan kalkmaz; saldırgan veriyi elinde tuttuğu sürece tehdit geçerliliğini korur.",
+      "Var olan bir yedek, kullanılmadığında değersizdir — kriz anında panikle alınan kararlar genellikle en maliyetli olanlardır.",
+      "Önceden hazırlanmış bir \u201colay müdahale planı\u201d (Bölüm 7), panik anında doğru kararı vermeyi kolaylaştırır."
+    ]
+  },
+
+  ending_bad_paid_partial: {
+    ending: "bad",
+    tag: "EN MALİYETLİ SONUÇ",
+    text: "Fidyeyi ödediniz ama yine de tüm veriyi geri alamadınız. Bu, fidye yazılımı saldırılarında sıkça görülen bir sonuçtur: saldırganın verdiği \u201cçözüm\u201d sözü hiçbir zaman teknik veya hukuki bir garanti taşımaz.",
+    lessons: [
+      "Fidye ödemesi bir ticari sözleşme değildir; saldırganın sözünü tutma zorunluluğu yoktur.",
+      "Test edilmemiş yedekler, kriz anında \u201cyedeğimiz var\u201d güvencesinin yanıltıcı olabileceğini gösterir.",
+      "Bu sonuç, yedekleme testinin (Bölüm 2.5) neden kontrol listesinde ayrı bir madde olarak yer aldığını doğrular."
+    ]
+  },
+
+};
+
+function getNode(id){ return NODES[id]; }
+
+function renderClock(){
+  const clockRow = document.getElementById('clock-row');
+  const clockText = document.getElementById('clock-text');
+  const node = getNode(currentNode);
+  const match = node.tag.match(/\+?(\d+)\s*(SAAT|SAAT$)/i);
+  if(node.tag.includes('SAHNE 1')){
+    clockRow.style.display = 'none';
+  } else {
+    clockRow.style.display = 'flex';
+    const m = node.tag.match(/\+(\d+)\s*SAAT/);
+    clockText.textContent = m ? ('SALDIRIDAN SONRA: +' + m[1] + ' SAAT') : 'OLAY DEVAM EDİYOR';
+  }
+}
+
+function renderNode(){
+  const node = getNode(currentNode);
+  document.getElementById('scene-tag').textContent = node.tag;
+  document.getElementById('scene-text').innerHTML = node.text;
+  renderClock();
+
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+
+  if(node.ending){
+    // Sonuç ekranı
+    const card = document.getElementById('scene-card');
+    const banner = document.createElement('div');
+    banner.className = 'ending-banner ' + node.ending;
+    banner.textContent = node.ending === 'good' ? '✓ ' + node.tag : (node.ending === 'mid' ? '◐ ' + node.tag : '✕ ' + node.tag);
+    card.insertBefore(banner, card.firstChild.nextSibling);
+
+    const lessonBox = document.createElement('div');
+    lessonBox.className = 'lesson-box';
+    let html = '<b>Bu senaryodan çıkarılacak dersler:</b><ul>';
+    node.lessons.forEach(l => html += '<li>' + l + '</li>');
+    html += '</ul>';
+    lessonBox.innerHTML = html;
+    card.appendChild(lessonBox);
+
+    const restartBtn = document.createElement('button');
+    restartBtn.className = 'restart-btn';
+    restartBtn.type = 'button';
+    restartBtn.textContent = 'Senaryoyu yeniden başlat';
+    restartBtn.onclick = restart;
+    choicesEl.appendChild(restartBtn);
+    return;
+  }
+
+  node.choices.forEach((choice, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.type = 'button';
+    btn.innerHTML = '<span class="c-num">' + (i+1) + '.</span>' + choice.label;
+    btn.addEventListener('click', () => {
+      const nextId = (typeof choice.next === 'function') ? choice.next() : choice.next;
+      history.push(currentNode);
+      currentNode = nextId;
+      renderNode();
+      window.scrollTo({top:0, behavior: 'smooth'});
+    });
+    choicesEl.appendChild(btn);
+  });
+}
+
+function restart(){
+  state.hasBackup = null;
+  state.mfaOn = null;
+  state.paidRansom = null;
+  state.notifiedAuthorities = null;
+  history = [];
+  currentNode = "start";
+  document.getElementById('scene-card').querySelectorAll('.ending-banner, .lesson-box').forEach(el => el.remove());
+  renderNode();
+}
+
+renderNode();
+</script>
+</body>
+</html>
